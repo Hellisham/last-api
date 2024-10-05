@@ -1,12 +1,13 @@
 package routers
 
 import (
+	"github.com/Hellisham/last-api/handlers"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
-func InitRoutes(db *gorm.DB) {
+func InitRouters(db *gorm.DB) *mux.Router {
 	router := mux.NewRouter()
-	router.HandleFunc("products/")
-
+	router.HandleFunc("/products", handlers.GetProductHandler(db)).Methods("GET")
+	return router
 }
