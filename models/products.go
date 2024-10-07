@@ -8,7 +8,7 @@ type Products struct {
 	Description string
 	Price       float64
 	Count       uint
-	CategoryID  uint
+	CategoryID  uint     `json:"category_id"`
 	Category    Category `gorm:"foreignKey:CategoryID"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
