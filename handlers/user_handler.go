@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/Hellisham/last-api/auth"
 	"github.com/Hellisham/last-api/db"
 	"github.com/Hellisham/last-api/models"
 	"golang.org/x/crypto/bcrypt"
@@ -60,8 +61,8 @@ func RegisterHandler() http.HandlerFunc {
 }
 
 type LoginRequest struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 type LoginResponse struct {
@@ -71,7 +72,9 @@ type LoginResponse struct {
 func LoginHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req_login LoginRequest
+		var user models.User
 
+		// Decode JSON request body into the LoginRequest struct
 		err := json.NewDecoder(r.Body).Decode(&req_login)
 		if err != nil {
 			http.Error(w, "Invalid input", http.StatusBadRequest)
@@ -79,12 +82,32 @@ func LoginHandler() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		result := db.DB.Where("email = ?", req_login.Email).First(&models.User{})
+		// Query the user from the database by name
+		result := db.DB.Where("name = ?", req_login.Name).First(&user)
 		if result.Error != nil {
 			http.Error(w, "User not found", http.StatusNotFound)
 			return
 		}
-		token, tokenerr := auth.GenerateToken(req_login.Name, req_login.Email)
-	}
 
+		// Compare the hashed password with the provided password
+		err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req_login.Password))
+		if err != nil {
+			http.Error(w, "Invalid password", http.StatusUnauthorized)
+			return
+		}
+
+		// Generate JWT token
+		token, tokenErr := auth.JwtGnarator(user.Name, user.Email)
+		if tokenErr != nil {
+			http.Error(w, "Error generating token", http.StatusInternalServerError)
+			return
+		}
+
+		// Set the Content-Type header to "application/json"
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		// Send the token in the response
+		json.NewEncoder(w).Encode(LoginResponse{Token: token})
+	}
 }
