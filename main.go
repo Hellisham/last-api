@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/Hellisham/last-api/db"
+	"github.com/Hellisham/last-api/metrics"
 	"github.com/Hellisham/last-api/models"
 	"github.com/Hellisham/last-api/routers"
 	"log"
@@ -9,8 +10,9 @@ import (
 )
 
 func main() {
+	metrics.InitMetrics()
 	datab := db.Connect()
-	err := datab.AutoMigrate(&models.Category{}, &models.Products{})
+	err := datab.AutoMigrate(&models.Category{}, &models.Products{}, &models.User{})
 	if err != nil {
 		log.Fatalf("Error migrating database: %v", err)
 	}

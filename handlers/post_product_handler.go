@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/Hellisham/last-api/db"
 	"github.com/Hellisham/last-api/models"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
@@ -18,7 +19,7 @@ type PostProductHandler struct {
 	Category    string
 }
 
-func CreateProductHandler(db *gorm.DB) http.HandlerFunc {
+func CreateProductHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var product models.Products
 
@@ -27,11 +28,11 @@ func CreateProductHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 		defer r.Body.Close()
-		result := db.Create(&product)
+		result := db.DB.Create(&product)
 		if result.Error != nil {
 			log.Println("Error creating product", result.Error)
 		}
-		if result := db.Preload("Category").First(&product, product.ID); result.Error != nil {
+		if result := db.DB.Preload("Category").First(&product, product.ID); result.Error != nil {
 			log.Println("Error preloading category", result.Error)
 			http.Error(w, "Error retrieving product", http.StatusInternalServerError)
 			return
@@ -49,7 +50,7 @@ func CreateProductHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func UpdateProductHandler(db *gorm.DB) http.HandlerFunc {
+func UpdateProductHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var product models.Products
 		vars := mux.Vars(r)
@@ -58,7 +59,7 @@ func UpdateProductHandler(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, "Invalid ID", http.StatusBadRequest)
 			return
 		}
-		if result := db.First(&product, id); result.Error != nil {
+		if result := db.DB.First(&product, id); result.Error != nil {
 			if result.Error == gorm.ErrRecordNotFound {
 				http.Error(w, "Product not found", http.StatusNotFound)
 				return
@@ -78,8 +79,8 @@ func UpdateProductHandler(db *gorm.DB) http.HandlerFunc {
 		product.Price = updateproduct.Price
 		product.Count = updateproduct.Count
 		product.CategoryID = updateproduct.CategoryID
-		db.Save(&product)
-		if result := db.Preload("Category").First(&product, product.ID); result.Error != nil {
+		db.DB.Save(&product)
+		if result := db.DB.Preload("Category").First(&product, product.ID); result.Error != nil {
 			http.Error(w, "error preload category", http.StatusInternalServerError)
 		}
 		productsResponse := ProductResponse{

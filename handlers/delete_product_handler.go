@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"github.com/Hellisham/last-api/db"
 	"github.com/Hellisham/last-api/models"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
@@ -11,7 +12,7 @@ import (
 	"strconv"
 )
 
-func DeleteProductHandler(db *gorm.DB) http.HandlerFunc {
+func DeleteProductHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id, err := strconv.Atoi(vars["id"])
@@ -20,7 +21,7 @@ func DeleteProductHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 		var product models.Products
-		if result := db.First(&product, id); result.Error != nil {
+		if result := db.DB.First(&product, id); result.Error != nil {
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				http.Error(w, "Product not found", http.StatusNotFound)
 				return
@@ -29,7 +30,7 @@ func DeleteProductHandler(db *gorm.DB) http.HandlerFunc {
 				return
 			}
 		}
-		if result := db.Delete(&product); result.Error != nil {
+		if result := db.DB.Delete(&product); result.Error != nil {
 			log.Println("Error Deleting Product", result.Error)
 			return
 		}

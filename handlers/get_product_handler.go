@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/Hellisham/last-api/db"
+	"github.com/Hellisham/last-api/metrics"
 	"github.com/Hellisham/last-api/models"
 	"github.com/gorilla/mux"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,12 +19,16 @@ type ProductResponse struct {
 	Category    string
 }
 
-func GetProductHandler(db *gorm.DB) http.HandlerFunc {
+func GetProductHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		defer func() {
+			metrics.REQUUEST_COUNT.Inc()
+		}()
 		var products []models.Products
 
-		if res := db.Preload("Category").Find(&products); res.Error != nil {
+		if res := db.DB.Preload("Category").Find(&products); res.Error != nil {
 			http.Error(w, res.Error.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -43,7 +48,7 @@ func GetProductHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func GetProductbByIdHandler(db *gorm.DB) http.HandlerFunc {
+func GetProductbByIdHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var product models.Products
 		vars := mux.Vars(r)
@@ -52,7 +57,7 @@ func GetProductbByIdHandler(db *gorm.DB) http.HandlerFunc {
 			http.Error(w, "Invalid Products ID", http.StatusBadRequest)
 			return
 		}
-		if res := db.Preload("Category").First(&product, id); res.Error != nil {
+		if res := db.DB.Preload("Category").First(&product, id); res.Error != nil {
 			log.Println("Product Not Found", res.Error)
 		}
 		productResponse := ProductResponse{
