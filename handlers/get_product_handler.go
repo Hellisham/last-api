@@ -32,8 +32,8 @@ func GetProductHandler() http.HandlerFunc {
 			http.Error(w, res.Error.Error(), http.StatusInternalServerError)
 			return
 		}
+		var productsResponse []ProductResponse
 		for _, product := range products {
-			var productsResponse []ProductResponse
 
 			productsResponse = append(productsResponse, ProductResponse{
 				Name:        product.Name,

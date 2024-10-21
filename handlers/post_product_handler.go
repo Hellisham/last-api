@@ -28,15 +28,17 @@ func CreateProductHandler() http.HandlerFunc {
 			return
 		}
 		defer r.Body.Close()
-		result := db.DB.Create(&product)
-		if result.Error != nil {
-			log.Println("Error creating product", result.Error)
-		}
 		if result := db.DB.Preload("Category").First(&product, product.ID); result.Error != nil {
 			log.Println("Error preloading category", result.Error)
 			http.Error(w, "Error retrieving product", http.StatusInternalServerError)
 			return
 		}
+
+		result := db.DB.Create(&product)
+		if result.Error != nil {
+			log.Println("Error creating product", result.Error)
+		}
+
 		productsResponse := ProductResponse{
 			Name:        product.Name,
 			Description: product.Description,
